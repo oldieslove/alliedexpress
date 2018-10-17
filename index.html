@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<script type='text/javascript'>
+
+/***********************************************
+* Carousel Slideshow II- By Harry Armadillo (http://www.codingforums.com/showthread.php?t=58814)
+* Visit Dynamic Drive at http://www.dynamicdrive.com/ for full source code
+* Please keep this notice intact
+***********************************************/
+
+function carousel(params){
+  if(!(params.width>0 && isFinite(params.width)))params.width=100;
+  if(!(params.height>0 && isFinite(params.height)))params.height=100;
+  if(!(params.sides>2 && isFinite(params.sides)))params.sides=4;
+  if(!(params.steps>0 && params.steps<100 && isFinite(params.steps)))params.steps=20;
+  if(!(params.speed>0 && isFinite(params.speed)))params.speed=8;
+  if(!(params.image_border_width>=0 && isFinite(params.image_border_width)))params.image_border_width=0;
+  if(isFinite(params.id)||!params.id)params.id='bad_id_given_'+Math.random();
+  
+  document.write("<div style='position:relative;overflow:hidden;' id='"+params.id.replace(/[^a-zA-Z0-9]+/g,'_')+"'></div>");
+  var cdiv=document.getElementById(params.id.replace(/[^a-zA-Z0-9]+/g,'_'))
+  cdiv.style.width=params.width+'px';
+  cdiv.style.height=params.height+'px';
+  cdiv.style.border=params.border;
+  cdiv.style.position='relative';
+  cdiv.style.overflow='hidden';
+  cdiv.title=params.id;
+    
+  var counter=0,spinning=true,interval=Math.floor(60000/params.sides/params.steps/params.speed)-5;
+  interval=isNaN(interval)?200:interval;
+  var img_position=[],images=[],img_dimension=[];
+  var img_index=params.images.length+1,img_index_cap=2*params.images.length;
+  var faces=Math.ceil(params.sides/2), dimension, direction, targ, attr, faraway;
+
+  function init(){
+    if(params.direction=="left" || params.direction=="right"){
+      direction=params.direction;
+      dimension="width";
+      }
+    else if(params.direction=="top" || params.direction=="bottom"){
+      direction=params.direction;
+      dimension="height";
+      }
+    else {
+      direction="left";
+      dimension="width";
+      }      
+    faraway=(direction=="left"||direction=="top")?'-20000px':'20000px';
+    cdiv.style[dimension]=params[dimension]/(params.size_mode=='image'?Math.sin(Math.PI/params.sides):1)+'px';
+    var img=new Image();
+    img.style.position='absolute';
+    img.style[direction]=faraway;
+    img.style.width=params.width-2*params.image_border_width+'px';
+    img.style.height=params.height-2*params.image_border_width+'px';
+    img.style.border=(params.image_border_width||0)+'px solid '+params.image_border_color;
+  
+    for(var i=0;i<params.images.length;i++){
+      images[i]=img.cloneNode(true);
+      images[i].src=params.images[i];
+      if(params.links && params.links[i] && params.links[i]!=''){
+        targ=params.lnk_targets && params.lnk_targets[i]||params.lnk_base||'new';
+        if(targ=="_blank"){
+          attr=(params.lnk_attr && params.lnk_attr[i])?",'"+params.lnk_attr[i]+"'":"";
+          images[i].onclick=new Function("window.open('"+params.links[i]+"','"+targ+"'"+attr+")");
+          }
+        else if(targ.substr(0,1)=="_"){
+          images[i].onclick=new Function(targ.substr(1)+".location='"+params.links[i]+"'");
+          }
+        else{
+          attr=(params.lnk_attr && params.lnk_attr[i])?",'"+params.lnk_attr[i]+"'":"";
+          images[i].onclick=new Function("var t='"+targ+"';if(window[t]){try{window[t].close()}catch(z){}}window[t]=window.open('"+params.links[i]+"',t"+attr+");window[t].focus()");
+          }
+        images[i].style.cursor=document.all?'hand':'pointer';
+        }
+
+      if(params.titles && params.titles[i] && params.titles[i]!='')
+        images[i].title=params.titles[i];
+      if(document.all)
+        images[i].alt=images[i].title;
+      images[i+params.images.length]=images[i];
+      if(params.images.length==faces)
+        images[i+2*params.images.length]=images[i];
+      cdiv.appendChild(images[i]);
+      }
+  
+    var face_size=params.size_mode=='image'?params[dimension]:params[dimension]*Math.sin(Math.PI/params.sides);
+    var face_offset=params[dimension]*Math.cos(Math.PI/params.sides)/(params.size_mode=='image'?Math.sin(Math.PI/params.sides):1)/2-.5;
+    var pi_piece=2*Math.PI/params.steps/params.sides;
+    for(i=0;i<=params.steps*faces;i++){
+      img_dimension[i]=face_size*Math.sin(pi_piece*i);
+      img_position[i]=(i<params.steps*params.sides/2)?Math.floor(params[dimension]/2/(params.size_mode=='image'?Math.sin(Math.PI/params.sides):1)-face_offset*Math.cos(pi_piece*i)-img_dimension[i]/2)+'px':faraway;
+      img_dimension[i]=img_dimension[i]-2*params.image_border_width>1?Math.ceil(img_dimension[i])-2*params.image_border_width+'px':'1px';
+      }
+    }
+  init();
+
+  cdiv.rotate = function(){
+    setTimeout('document.getElementById("'+cdiv.id+'").rotate()',interval);
+    if(!spinning) return;
+    if(++counter>=params.steps){
+      counter=0;
+      if(++img_index>=img_index_cap)
+        img_index=params.images.length;
+      }
+    images[img_index-faces].style[direction]=faraway;
+    for(var i=faces-1;i>=0;i--){
+      images[img_index-i].style[direction]=img_position[counter+i*params.steps];
+      images[img_index-i].style[dimension]=img_dimension[counter+i*params.steps];
+      }
+    }
+  cdiv.onmouseover=function(){
+    spinning=false;
+    }
+  cdiv.onmouseout=function(){
+    spinning=true;
+    }
+  setTimeout('document.getElementById("'+cdiv.id+'").rotate()',100);
+  }
+</script>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>AESC</title>
+<style type="text/css">
+</script>
+<!--
+#Layer1 {
+	position:absolute;
+	left:141px;
+	top:2px;
+	width:972px;
+	height:794px;
+	z-index:1;
+}
+.style3 {font-family: Calibri, "Calibri Light"; font-size: 14px; }
+.style4 {font-size: 14px}
+-->
+</style>
+<style type="text/css">
+<!--
+.style101 {
+	font-size: 14px;
+	font-weight: bold;
+	color: #081B5F;
+	font-family: Calibri, "Calibri Light";
+}
+.style109 {
+	color: #081B5F;
+	font-weight: bold;
+	font-family: Calibri, "Calibri Light";
+}
+.style5 {font-family: Calibri, "Calibri Light"}
+.style7 {font-size: 12px}
+.style111 {font-size: 12px; font-family: Calibri, "Calibri Light"; }
+.style112 {
+	font-weight: bold;
+	color: #081B5F;
+	font-family: Tahoma;
+	font-size: 14px;
+}
+#Layer2 {
+	position:absolute;
+	left:-137px;
+	top:799px;
+	width:1223px;
+	height:23px;
+	z-index:2;
+}
+.style114 {font-weight: bold; color: #081B5F; }
+.style115 {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #FFFFFF;
+}
+-->
+</style>
+<link href="sty.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+a {
+	font-family: Calibri, Calibri Light;
+	font-size: 13px;
+	font-weight: bold;
+}
+a:link {
+	color: #033536;
+	text-decoration: underline;
+}
+a:visited {
+	color: #033536;
+	text-decoration: underline;
+}
+a:hover {
+	text-decoration: none;
+	color: #FFFFFF;
+}
+a:active {
+	text-decoration: underline;
+	color: #033536;
+}
+.style116 {font-size: 13px}
+.style117 {color: #040D0C}
+body,td,th {
+	font-family: sans-serif;
+	color: #000000;
+	font-size: 12px;
+}
+.style108 {
+	font-size: 12px;
+	color: #000000;
+	font-family: Calibri, "Calibri Light";
+}
+.style110 {color: #0066CC}
+.style119 {color: #AA1123}
+-->
+</style>
+</script>
+</head>
+
+<body>
+<div id="Layer1">
+  <table width="890" border="0" align="center">
+    <tr>
+      <td height="197"><img src="United%20Courie_files/banner.jpg" width="900" height="195" /></td>
+    </tr>
+    <tr>
+      <td height="26" align="right"><span class="style3"><a href="index-2.html">HOME</a>  | &nbsp; <a href="about.html">ABOUT US</a>  | &nbsp;&nbsp;<a href="service.html">SERVICES</a> |&nbsp;&nbsp;<a href="career.html">CAREERS</a> |&nbsp;&nbsp;<a href="http://allied-expressltd.ml/track-status/">TRACK DELIVERY</a></span> | <span class="style4">&nbsp;&nbsp;</span><span class="style3 style116"><a href="contact.html">CONTACT US</a></span> </td>
+    </tr>
+    <tr>
+      <td height="26" valign="top"><table width="901" border="0" cellpadding="0" cellspacing="00">
+        <tr>
+          <td height="19" colspan="5" valign="top" bgcolor="#C0C0C0">&nbsp;</td>
+          </tr>
+        <tr>
+          <td width="372" height="46" rowspan="3" valign="top"><p><span class="style101">WELCOME TO ALLIED EXPRESS SHIPPING COMPANY </span></p>
+            <p><span class="style5"><span class="style7">AESC is a premier courier  company offering local,   national and international courier deliveries to businesses 
+                and   individuals around the globe.We offer a highly efficient delivery service to  200 countries worldwide.              </span></span>              </p>
+            <p class="style109">Our Express Delivery Service Offers:</p>
+  <ul class="style5">
+    <li class="style7">Delivery to 200 countries worldwide</li>
+    <li class="style7">Full advice on customs paperwork</li>
+    <li class="style7">Global leader and innovator in express 
+      shipping</li>
+    <li class="style7">Competitive prices e.g. from &pound;20.57 to the USA</li>
+    <li class="style7">Individual parcel tracking and proof of delivery</li>
+    <li class="style7">Assistance from a dedicated international customer &nbsp;services 
+      team Exceptional service</li>
+  </ul>
+  <p class="style5"><span class="style114">The CourierXpress Guarantee:</span><br />
+      <span class="style7">Three hour delivery for local and   in-town deliveries. <br />
+      If we don't make it  you don't 
+    pay for it       .
+    This applies &nbsp;to&nbsp; on-call pickups and delivery made in the same   city.In today&rsquo;s busy e-commerce economy, one missed deadline, one slow   response can mean the difference between life and death for your   business.<br />
+      <br />
+</span><img src="United%20Courie_files/banner_01.jpg" width="372" height="85" /><br />
+<span class="style114">International Documents &amp; Parcels Deliveries</span> <br />
+<br />
+    <span class="style111">Our worldwide network of   partners means we can handle your consignment, wherever it&rsquo;s going in   the world, promptly and efficiently.  Online secure tracking and tracing   makes every job easy to manage. <br />
+Your package is indeed safe with us.    we cover you up to $100.00 at no cost to you .Iinsurance is     available       for values above $100.00 at customer expense.</span></p>
+  <hr /></td>
+          <td width="19" rowspan="4" valign="top">&nbsp;</td>
+          <td colspan="3" valign="top"><p><img src="images/2.jpg" width="512" height="300" /></p>
+            </td>
+        </tr>
+        <tr>
+          <td width="181" valign="top"><span class="flash"><img src="United%20Courie_files/GetSharepointImage.jpg" width="180" height="180" /></span></td>
+          <td width="181" valign="top"><span class="flash"><img src="United%20Courie_files/GetSharepointImage_002.jpg" width="180" height="180" /></span></td>
+          <td width="148" valign="top"><span class="flash"><img src="United%20Courie_files/GetSharepointImage_002.jpg" width="146" height="180" /></span></td>
+        </tr>
+        <tr>
+          <td colspan="3" rowspan="2" valign="top"><h3 class="style101">Guide to tracking on CourierPlus</h3>
+            <p class="style5">To track successfully, you must have the <strong>tracking number</strong> of your package. <br />
+  Click   on the track button right after this text box (a new pop-up window will   be displayed), provide the tracking number of the package and push the   &quot;track button&quot; Should you encounter any   difficulty tracking your package, please do not hesitate to launch the   live chat on this website, and have our I.T Support Team help you out.</p>
+            <p align="justify" class="style5">We are here to offer you the best and most reliable courier service ever.</p>            
+            <h2 class="style112"><span class="style110"><strong class="style114"><strong>Network</strong></strong><br />
+              <br />
+                <span class="style108">One of the best in the country today that 
+is focused on its Target   of   packages. Our network is self-sustaining, with its own warehouses,     surface handling and maintenance capability.</span></span></h2>            </td>
+          </tr>
+        <tr>
+          <td valign="top"><p class="style114">Dedicated Service</p>
+            <p class="style5">It is not always possible to know exactly when or where you might need deliveries made. Do you need flexibility in your schedule? We have a solution: Obtain a driver for your exclusive use. Whether to accommodate daily time changes or seasonal increases and decreases in your business, this flexible service option is tailored to suit your specific business needs.</p>            
+            <h3>&nbsp;</h3>            </td>
+          </tr>
+        
+      </table></td>
+    </tr>
+  </table>
+  <p>&nbsp;</p>
+</div>
+<table width="1221" border="0" align="center">
+  <tr>
+    <td height="53" valign="top" bgcolor="#DBE4E3"><span class="style115"><a href="index-2.html">Home</a> | <a href="about.html">About Us</a> | <a href="terms.html">Contact Us</a><br />
+        <span class="style117">&copy;<span class="style119"><span class="style117">Copyright 2013 All Right Reserve</span><br />
+    <a href="index-2.html">AESC</a><a href="login.html"> Service</a></span> </span></span></td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+</body>
+
+<!-- Mirrored from alliedexpress.eu.pn/ by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 21 Jan 2017 14:37:47 GMT -->
+</html>
